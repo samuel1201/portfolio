@@ -1,0 +1,109 @@
+:root {
+  /* Typography: Archivo for headings, Space Grotesk for body */
+  --font-display: 'Archivo', system-ui, -apple-system, sans-serif;
+  --font-body: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+
+  /* Color Palette: Monochrome + Accent */
+  --color-primary: #18181B;
+  --color-secondary: #3F3F46;
+  --color-accent: #2563EB;
+  --color-accent-light: #3B82F6;
+  --color-highlight: #7ED321;
+  --color-bg: #FAFAFA;
+  --color-text: #09090B;
+  --color-text-muted: #71717A;
+  --color-text-subtle: #A1A1AA;
+  --color-border: rgba(24, 24, 27, 0.08);
+  --color-border-strong: rgba(24, 24, 27, 0.15);
+
+  /* Spacing Scale (8px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+
+  /* Grid System - 12 columns */
+  --grid-columns: 12;
+  --grid-gutter: 24px;
+  --grid-margin: clamp(1.5rem, 4vw, 3rem);
+  --container-max: 1400px;
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+
+  font-family: var(--font-body);
+  line-height: 1.6;
+  font-weight: 400;
+  font-optical-sizing: auto;
+
+  color-scheme: light;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+a:hover {
+  color: var(--color-accent-light);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(ellipse 1400px 900px at 5% 10%, rgba(37, 99, 235, 0.04), transparent 50%),
+    radial-gradient(ellipse 1000px 700px at 95% 20%, rgba(37, 99, 235, 0.03), transparent 50%),
+    radial-gradient(ellipse 1200px 800px at 50% 100%, rgba(24, 24, 27, 0.02), transparent 50%),
+    var(--color-bg);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+h1 {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 800;
+}
+
+h2 {
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 500;
+}
+
+h3 {
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-weight: 600;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.15);
+  color: var(--color-primary);
+}
