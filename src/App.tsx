@@ -26,8 +26,8 @@ function App() {
         const el = document.getElementById(navSections[i]);
         if (el && el.offsetTop <= scrollPos) {
           setActiveSection(navSections[i]);
-          const bgColor = el.closest('section')?.getAttribute('data-bg');
-          setNavTheme(bgColor === '#1D1D1D' ? 'dark' : 'light');
+          const sectionTheme = el.getAttribute('data-theme');
+          setNavTheme(sectionTheme === 'dark' ? 'dark' : 'light');
           break;
         }
       }
@@ -39,10 +39,7 @@ function App() {
   }, []);
 
   useGSAP(() => {
-    // 清理之前的 ScrollTrigger 實例（防止 HMR 或重新渲染時衝突）
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-    
-    // ScrollTrigger + Lenis（標準 smooth / inertia scrolling 組合）
     ScrollTrigger.config({ limitCallbacks: true });
 
     const lenis = new Lenis({
@@ -54,19 +51,21 @@ function App() {
     lenis.on('scroll', ScrollTrigger.update);
 
     const updateLenis = (time: number) => {
-      // gsap.ticker 傳 seconds，Lenis 要 milliseconds
       lenis.raf(time * 1000);
     };
 
     gsap.ticker.add(updateLenis);
     gsap.ticker.lagSmoothing(0);
+    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
 
-    // 首屏：個人化的動態文字效果
+    // Hero intro animation
     const hero = container.current?.querySelector<HTMLElement>('#hero');
+    let rotatingIntervalId: number | null = null;
+    let rotatingDelayCall: gsap.core.Tween | null = null;
+    const heroPointerCleanups: Array<() => void> = [];
     if (hero) {
       const intro = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-      // 元素選取
       const heroKicker = hero.querySelector('.heroKickerAnimated');
       const heroChars = hero.querySelectorAll('.heroChar');
       const heroNameText = hero.querySelector('.heroNameText');
@@ -74,7 +73,6 @@ function App() {
       const rotatingText = hero.querySelector<HTMLElement>('.heroRotatingText');
       const heroBody = hero.querySelector('.heroBodyAnimated');
 
-      // 初始狀態
       gsap.set(heroKicker, { opacity: 0, y: 20 });
       gsap.set(heroChars, { opacity: 0, y: 40, rotateY: -30 });
       gsap.set(heroNameText, { opacity: 0, y: 30 });
@@ -82,15 +80,12 @@ function App() {
       gsap.set(rotatingText, { opacity: 0, x: -20 });
       gsap.set(heroBody, { opacity: 0, y: 20 });
 
-      // 進場動畫序列
       intro
-        // Kicker 先出現
         .to(heroKicker, {
           opacity: 1,
           y: 0,
           duration: 0.5,
         })
-        // "Hi, I'm" 字母滑入
         .to(heroChars, {
           opacity: 1,
           y: 0,
@@ -99,14 +94,12 @@ function App() {
           stagger: 0.03,
           ease: 'power2.out',
         }, '-=0.2')
-        // "Samuel" 進場
         .to(heroNameText, {
           opacity: 1,
           y: 0,
           duration: 0.6,
           ease: 'power2.out',
         }, '-=0.3')
-        // "a" + 旋轉職稱
         .to(heroRoleStatic, {
           opacity: 1,
           duration: 0.3,
@@ -117,7 +110,6 @@ function App() {
           duration: 0.5,
           ease: 'power2.out',
         }, '-=0.2')
-        // 副標題
         .to(heroBody, {
           opacity: 1,
           y: 0,
@@ -130,7 +122,6 @@ function App() {
           '-=0.1',
         );
 
-      // 旋轉文字切換動畫
       if (rotatingText) {
         const words = rotatingText.dataset.words?.split(',') || ['Designer'];
         let currentIndex = 0;
@@ -155,16 +146,13 @@ function App() {
             );
         };
 
-        gsap.delayedCall(2.5, () => {
-          setInterval(rotateWord, 2200);
+        rotatingDelayCall = gsap.delayedCall(2.5, () => {
+          rotatingIntervalId = window.setInterval(rotateWord, 2200);
         });
       }
 
 
-      // 幾何裝飾進場動畫
       const decorItems = hero.querySelectorAll<HTMLElement>('.decorItem');
-      
-      // 進場：依序淡入 + 縮放
       gsap.fromTo(
         decorItems,
         { opacity: 0, scale: 0.5, rotate: -15 },
@@ -179,13 +167,10 @@ function App() {
         }
       );
 
-      // 各元素獨立的持續動畫
       const animConfigs: Record<string, { y?: number[]; x?: number[]; rotate?: number[]; scale?: number[]; duration: number }> = {
-        // 大型色塊
         decorBlob1: { scale: [0.9, 1.15], y: [-40, 40], duration: 6 },
         decorBlob2: { scale: [0.88, 1.12], y: [30, -30], duration: 8 },
         decorMain: { rotate: [0, 360], duration: 60 },
-        // 浮動點 - 增加移動幅度
         decorDot1: { y: [-45, 45], x: [-35, 35], scale: [0.7, 1.3], duration: 2.2 },
         decorDot2: { y: [-50, 50], x: [-40, 40], scale: [0.72, 1.28], duration: 2.5 },
         decorDot3: { y: [-40, 40], x: [-30, 30], scale: [0.75, 1.25], duration: 2.8 },
@@ -200,7 +185,6 @@ function App() {
         decorDot12: { y: [-35, 35], x: [-25, 25], scale: [0.78, 1.22], duration: 2.7 },
         decorDot13: { y: [-30, 30], x: [-28, 28], scale: [0.74, 1.26], duration: 2.2 },
         decorDot14: { y: [-25, 25], x: [-22, 22], scale: [0.8, 1.2], duration: 2.5 },
-        // 額外浮動點
         decorDot15: { y: [-42, 42], x: [-32, 32], scale: [0.72, 1.28], duration: 2.0 },
         decorDot16: { y: [-35, 35], x: [-38, 38], scale: [0.75, 1.25], duration: 2.4 },
         decorDot17: { y: [-38, 38], x: [-28, 28], scale: [0.78, 1.22], duration: 2.8 },
@@ -211,27 +195,20 @@ function App() {
         decorDot22: { y: [-35, 35], x: [-46, 46], scale: [0.68, 1.32], duration: 1.9 },
         decorDot23: { y: [-42, 42], x: [-38, 38], scale: [0.72, 1.28], duration: 2.3 },
         decorDot24: { y: [-22, 22], x: [-28, 28], scale: [0.82, 1.18], duration: 2.7 },
-        // 十字
         decorCross1: { rotate: [0, 180], scale: [0.8, 1.2], y: [-20, 20], duration: 6 },
         decorCross2: { rotate: [0, -180], scale: [0.82, 1.18], y: [-18, 18], duration: 8 },
         decorCross3: { rotate: [0, 90], scale: [0.85, 1.15], y: [-15, 15], duration: 10 },
-        // 圓環
         decorRing1: { rotate: [0, -360], scale: [0.85, 1.15], y: [-25, 25], duration: 15 },
         decorRing2: { rotate: [0, 360], scale: [0.88, 1.12], y: [-20, 20], duration: 18 },
         decorRing3: { rotate: [0, -180], scale: [0.82, 1.18], y: [-22, 22], duration: 12 },
-        // 菱形
         decorDiamond1: { rotate: [-45, 45], scale: [0.75, 1.25], y: [-18, 18], duration: 4.5 },
         decorDiamond2: { rotate: [45, -45], scale: [0.8, 1.2], y: [-15, 15], duration: 5.5 },
-        // 三角形
         decorTriangle1: { rotate: [-20, 20], y: [-25, 25], x: [-15, 15], duration: 4 },
         decorTriangle2: { rotate: [20, -20], y: [-20, 20], x: [-12, 12], duration: 5 },
-        // 角落
         decorCorner1: { scale: [0.85, 1.15], y: [-15, 15], duration: 4 },
         decorCorner2: { scale: [0.88, 1.12], y: [-12, 12], duration: 5 },
-        // 弧線
         decorArc1: { y: [-20, 20], x: [-15, 15], scale: [0.9, 1.1], duration: 3 },
         decorArc2: { y: [-18, 18], x: [-12, 12], scale: [0.92, 1.08], duration: 4 },
-        // 螺旋點群
         decorSpiral: { rotate: [0, 360], scale: [0.8, 1.2], y: [-15, 15], duration: 10 },
       };
 
@@ -252,7 +229,6 @@ function App() {
           tl.to(el, { x: config.x[1], duration: config.duration * 0.8, ease: 'sine.inOut' }, 0);
         }
         if (config.rotate) {
-          // 判斷是否為波浪線（需要來回擺動）或其他元素（持續旋轉）
           const isWave = decorClass.startsWith('decorWave');
           if (isWave) {
             gsap.set(el, { rotate: config.rotate[0] });
@@ -271,9 +247,7 @@ function App() {
         }
       });
 
-      // 滑鼠微視差（快速但平滑）：讓 hero 有「跟著呼吸」的互動感
-      const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-      if (!prefersReduced) {
+      if (!prefersReducedMotion) {
         const decorRoot = hero.querySelector<HTMLElement>('.decor');
         const heroTitle = hero.querySelector<HTMLElement>('.heroTitleAnimated');
         
@@ -292,19 +266,24 @@ function App() {
             titleToX?.(nx * -8);
             titleToY?.(ny * -6);
           };
-          hero.addEventListener('pointermove', onMove);
-          hero.addEventListener('pointerleave', () => {
+          const onLeave = () => {
             decorToX?.(0);
             decorToY?.(0);
             titleToX?.(0);
             titleToY?.(0);
+          };
+          hero.addEventListener('pointermove', onMove);
+          hero.addEventListener('pointerleave', onLeave);
+          heroPointerCleanups.push(() => {
+            hero.removeEventListener('pointermove', onMove);
+            hero.removeEventListener('pointerleave', onLeave);
           });
         }
       }
 
+      // Scroll-linked hero fade
       const heroStack = hero.querySelector<HTMLElement>('.heroStack');
       if (heroStack) {
-        // 往下時 Hero 文字自然上推淡出，銜接下一段（不 pin 卡片）
         gsap.to(heroStack, {
           yPercent: -35,
           opacity: 0,
@@ -329,7 +308,7 @@ function App() {
       }
     }
 
-    // 進場動畫：用 batch 減少 ScrollTrigger 數量
+    // Section reveal
     ScrollTrigger.batch('.content:not(.hero)', {
       start: 'top 75%',
       onEnter: (batch) => {
@@ -341,14 +320,12 @@ function App() {
       },
     });
 
-
-    // Photography 橫向畫廊 - Desktop 使用 ScrollTrigger，Mobile 使用原生水平滾動
+    // Horizontal gallery (desktop only)
     const photoGallery = container.current?.querySelector<HTMLElement>('.photoGallery');
     const photoSection = container.current?.querySelector<HTMLElement>('#photography');
     const isMobile = window.innerWidth <= 768;
     
     if (photoGallery && photoSection && !isMobile) {
-      // Desktop: 垂直滾動觸發橫向移動
       const getScrollAmount = () => {
         const galleryWidth = photoGallery.scrollWidth;
         const viewportWidth = window.innerWidth;
@@ -369,9 +346,7 @@ function App() {
         },
       });
     }
-    // Mobile: 不設置 ScrollTrigger，使用 CSS 原生水平滾動
-
-    // 導航小圓點跳動動畫
+    // Nav dots
     const allNavDots = gsap.utils.toArray<HTMLElement>('.navDot');
     if (allNavDots.length > 0) {
       gsap.to(allNavDots, {
@@ -386,7 +361,7 @@ function App() {
       });
     }
 
-    // 標題裝飾線段動畫 - 持續的脈動伸縮效果
+    // Section title accent line
     const titleLines = gsap.utils.toArray<HTMLElement>('.titleLine');
     if (titleLines.length > 0) {
       gsap.to(titleLines, {
@@ -398,7 +373,7 @@ function App() {
       });
     }
 
-    // Projects 圖片 hover：用 GSAP 做 zoom-in + 微微亮度提升
+    // Project thumbnail hover
     const thumbLinks = gsap.utils.toArray<HTMLElement>('.projectThumbLink');
     const hoverCleanups: Array<() => void> = [];
     thumbLinks.forEach((link) => {
@@ -422,11 +397,15 @@ function App() {
       });
     });
 
-    // 確保所有 ScrollTrigger 正確初始化
     ScrollTrigger.refresh();
 
-    // cleanup：還原 Lenis、hover listeners、ScrollTrigger 與 ticker
+    // Cleanup
     return () => {
+      if (rotatingIntervalId !== null) {
+        window.clearInterval(rotatingIntervalId);
+      }
+      rotatingDelayCall?.kill();
+      heroPointerCleanups.forEach((fn) => fn());
       gsap.ticker.remove(updateLenis);
       lenis.destroy();
       hoverCleanups.forEach((fn) => fn());
@@ -444,7 +423,6 @@ function App() {
 
   return (
     <main ref={container}>
-      {/* 固定導航列 */}
       <nav className="fixedNav" data-theme={navTheme}>
         {navSections.map((id, i) => (
           <button
@@ -492,7 +470,7 @@ function App() {
                   </span>
                 </h1>
                 <p className="heroBody heroBodyAnimated">
-                  專注於 Web UI 設計與前端開發，將設計想法轉化為流暢的互動體驗。
+                  我把複雜需求轉成可實作、可驗證的介面系統。
                 </p>
                 <div className="scrollHint" aria-hidden>
                   <span className="scrollDot" />
@@ -505,59 +483,52 @@ function App() {
             <div className="content">
               <div className="aboutGrid">
                 <aside className="aboutPhotoSide">
-                  <div className="aboutPhoto">
-                    <img className="aboutPhotoImg" />
-                  </div>
+                  <div className="aboutPhoto" aria-hidden />
                 </aside>
                 <div className="aboutMain">
-                  <div className="aboutBody">
-                    <p className="body">
-                      從事設計相關工作多年，職涯早期以網頁與平面設計為主，之後參與企業品牌、展覽視覺以及數位產品 UI 設計。過去曾任職於宏碁、正文科技、揚智科技等公司，接觸過不同規模的設計專案與產品開發流程。
-                    </p>
-                    <p className="body">
-                      近幾年主要的工作重心放在 Web UI 設計與前端協作，實務上大量接觸 React 與 CSS 架構，建立與前端工程師更順暢的溝通方式，讓設計稿能更貼近實際開發流程並提升協作效率。
-                    </p>
-                    <p className="body">
-                      目前希望能往資深產品設計或設計整合的角色發展，除了設計本身，也希望能參與更多產品規劃與跨部門合作的工作。
-                    </p>
-                  </div>
+                  <div className="aboutStoryGrid">
+                    <div className="aboutBody">
+                      <p className="body">
+                        我把設計視為「讓決策更清楚」的工具，而不只是視覺包裝。我的核心工作是把模糊需求轉成可被使用、可被實作、可被迭代的介面系統。
+                      </p>
+                      <p className="body">
+                        職涯橫跨企業品牌、展覽視覺與數位產品，近年聚焦 Web UI 與前端協作，透過元件化與清楚交付規格，讓團隊更快把設計轉成可驗證的產品成果。
+                      </p>
+                    </div>
 
-                  <div className="experienceBlock">
-                    <h3 className="skillsTitle">Experience</h3>
-                    <ul className="aboutTimeline">
-                      <li>
-                        <span className="aboutTimelineYear">2018–2026</span>
-                        <div className="aboutTimelineBody">
-                          <p className="aboutTimelineCompany">軒昂股份有限公司</p>
-                          <p className="aboutTimelineRole">Web UI Designer</p>
-                          <p className="aboutTimelineDesc">Figma 設計稿轉 React 元件，協助優化網站介面與使用者體驗。</p>
-                        </div>
-                      </li>
-                      <li>
-                        <span className="aboutTimelineYear">2015–2018</span>
-                        <div className="aboutTimelineBody">
-                          <p className="aboutTimelineCompany">揚智科技</p>
-                          <p className="aboutTimelineRole">Senior Visual Designer</p>
-                          <p className="aboutTimelineDesc">主導國際展覽主視覺與攤位設計，負責企業識別與官網設計。</p>
-                        </div>
-                      </li>
-                      <li>
-                        <span className="aboutTimelineYear">2014–2015</span>
-                        <div className="aboutTimelineBody">
-                          <p className="aboutTimelineCompany">Acer 宏碁</p>
-                          <p className="aboutTimelineRole">UI Designer</p>
-                          <p className="aboutTimelineDesc">負責 BYOC 雲端產品 APP UI 設計與設計規範建立。</p>
-                        </div>
-                      </li>
-                      <li>
-                        <span className="aboutTimelineYear">2010–2014</span>
-                        <div className="aboutTimelineBody">
-                          <p className="aboutTimelineCompany">正文科技</p>
-                          <p className="aboutTimelineRole">Visual Designer</p>
-                          <p className="aboutTimelineDesc">企業品牌與產品視覺設計，包含網站、展覽與產品 UI。</p>
-                        </div>
-                      </li>
-                    </ul>
+                    <div className="experienceBlock">
+                      <h3 className="skillsTitle">Experience</h3>
+                      <ul className="aboutTimeline">
+                        <li>
+                          <span className="aboutTimelineYear">2018–2026</span>
+                          <div className="aboutTimelineBody">
+                            <p className="aboutTimelineCompany">軒昂股份有限公司</p>
+                            <p className="aboutTimelineRole">Web UI Designer</p>
+                          </div>
+                        </li>
+                        <li>
+                          <span className="aboutTimelineYear">2015–2018</span>
+                          <div className="aboutTimelineBody">
+                            <p className="aboutTimelineCompany">揚智科技</p>
+                            <p className="aboutTimelineRole">Senior Visual Designer</p>
+                          </div>
+                        </li>
+                        <li>
+                          <span className="aboutTimelineYear">2014–2015</span>
+                          <div className="aboutTimelineBody">
+                            <p className="aboutTimelineCompany">Acer 宏碁</p>
+                            <p className="aboutTimelineRole">UI Designer</p>
+                          </div>
+                        </li>
+                        <li>
+                          <span className="aboutTimelineYear">2010–2014</span>
+                          <div className="aboutTimelineBody">
+                            <p className="aboutTimelineCompany">正文科技</p>
+                            <p className="aboutTimelineRole">Visual Designer</p>
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
 
                   <div className="skillsBlock">
@@ -566,11 +537,7 @@ function App() {
                       {profile.skillGroups.map((group) => (
                         <div key={group.title} className="skillsGroup">
                           <p className="skillsGroupTitle">{group.title}</p>
-                          <div className="skillsPills">
-                            {group.items.map((item) => (
-                              <span key={item} className="pill">{item}</span>
-                            ))}
-                          </div>
+                          <p className="skillsLine">{group.items.join(' · ')}</p>
                         </div>
                       ))}
                     </div>
@@ -706,6 +673,31 @@ function App() {
                       <path d="M22 7h-7V5h7v2zm1.726 10c-.442 1.297-2.029 3-5.101 3-3.074 0-5.564-1.729-5.564-5.675 0-3.91 2.325-5.92 5.466-5.92 3.082 0 4.964 1.782 5.375 4.426.078.506.109 1.188.095 2.14H15.97c.13 1.211.994 1.738 2.041 1.738.79 0 1.474-.362 1.797-.908h3.918zM15.97 13.553h5.096c-.09-1.146-.808-1.74-1.997-1.74-1.052 0-1.895.544-2.099 1.74zM9.089 5.073H2V19h7.089c4.174 0 5.282-2.766 5.282-4.446 0-2.291-1.453-3.282-2.47-3.645 1.017-.362 2.045-1.348 2.045-3.089 0-1.68-1.109-2.747-4.857-2.747zm.524 5.747H5v-2.82h4.416c.994 0 1.652.358 1.652 1.31 0 .95-.495 1.51-1.455 1.51zm-.29 5.68H5v-3.18h4.324c1.168 0 1.652.695 1.652 1.59 0 .943-.525 1.59-1.652 1.59z"/>
                     </svg>
                     <span className="contactLinkText">Behance</span>
+                  </a>
+                ) : null}
+                {profile.links.github ? (
+                  <a className="contactLink" href={profile.links.github} target="_blank" rel="noreferrer">
+                    <svg className="contactIcon" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.477 2 2 6.595 2 12.262c0 4.533 2.865 8.379 6.839 9.736.5.095.682-.223.682-.496 0-.245-.009-.893-.014-1.752-2.782.618-3.369-1.37-3.369-1.37-.455-1.18-1.11-1.494-1.11-1.494-.908-.634.069-.621.069-.621 1.004.072 1.532 1.055 1.532 1.055.892 1.57 2.341 1.117 2.91.854.091-.664.349-1.118.635-1.375-2.22-.259-4.555-1.14-4.555-5.072 0-1.12.39-2.036 1.03-2.753-.103-.26-.446-1.302.098-2.714 0 0 .84-.276 2.75 1.051A9.35 9.35 0 0112 6.863c.85.004 1.707.116 2.507.34 1.909-1.327 2.748-1.051 2.748-1.051.545 1.412.202 2.454.1 2.714.64.717 1.028 1.633 1.028 2.753 0 3.943-2.338 4.81-4.566 5.064.359.317.679.942.679 1.9 0 1.371-.012 2.476-.012 2.813 0 .275.18.596.688.495C19.138 20.637 22 16.793 22 12.262 22 6.595 17.523 2 12 2z" />
+                    </svg>
+                    <span className="contactLinkText">GitHub</span>
+                  </a>
+                ) : null}
+                {profile.links.linkedin ? (
+                  <a className="contactLink" href={profile.links.linkedin} target="_blank" rel="noreferrer">
+                    <svg className="contactIcon" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.86-3.04-1.86 0-2.15 1.45-2.15 2.95v5.66H9.32V9h3.42v1.56h.05c.48-.9 1.64-1.86 3.37-1.86 3.6 0 4.27 2.37 4.27 5.46v6.29zM5.34 7.43a2.06 2.06 0 110-4.12 2.06 2.06 0 010 4.12zM7.12 20.45H3.56V9h3.56v11.45z" />
+                    </svg>
+                    <span className="contactLinkText">LinkedIn</span>
+                  </a>
+                ) : null}
+                {profile.links.cv ? (
+                  <a className="contactLink" href={profile.links.cv} target="_blank" rel="noreferrer">
+                    <svg className="contactIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M14 3v5h5M9 13h6M9 17h6" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span className="contactLinkText">CV</span>
                   </a>
                 ) : null}
               </div>

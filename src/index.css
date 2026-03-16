@@ -33,6 +33,8 @@
   --grid-gutter: 24px;
   --grid-margin: clamp(1.5rem, 4vw, 3rem);
   --container-max: 1400px;
+  --section-pad-top: clamp(96px, 12vh, 160px);
+  --section-pad-bottom: clamp(72px, 10vh, 140px);
 
   /* Transitions */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);

@@ -18,6 +18,9 @@ export type Profile = {
   email: string;
   links: {
     behance?: string;
+    github?: string;
+    linkedin?: string;
+    cv?: string;
   };
   skillGroups: SkillGroup[];
   projects: Project[];
@@ -38,11 +41,11 @@ export const profile: Profile = {
   email: 'samuel1201@gmail.com',
   links: {
     behance: 'https://www.behance.net/samuel1201',
+    github: 'https://github.com/samuel1201',
   },
   skillGroups: [
     { title: 'Frontend', items: ['React', 'TypeScript', 'GSAP'] },
-    { title: 'UI', items: ['CSS', 'Component thinking', 'Design-to-dev handoff'] },
-    { title: 'Tooling', items: ['Git'] },
+    { title: 'UI Systems', items: ['Component thinking', 'Design handoff', 'Interaction rhythm'] },
   ],
   projects: [
     {
@@ -91,7 +94,7 @@ export const profile: Profile = {
 };
 
 export const resumeSections: ResumeSection[] = [
-  // 黑白穿插（你指定的配色）
+  // Section order and theme
   { id: 'hero', title: '', color: '#F5F5F5' },
   { id: 'about', title: 'Resume', color: '#1D1D1D' },
   { id: 'projects', title: 'Graphic', color: '#F5F5F5' },
