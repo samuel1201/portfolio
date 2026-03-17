@@ -15,8 +15,10 @@ const navLabels = ['Hello!', 'Resume', 'Graphic', 'Photography', 'Contact'];
 
 function App() {
   const container = useRef<HTMLDivElement>(null);
+  const projectsMobileRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState('hero');
   const [navTheme, setNavTheme] = useState<'light' | 'dark'>('light');
+  const [activeProjectIndex, setActiveProjectIndex] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,6 +39,75 @@ function App() {
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const scroller = projectsMobileRef.current;
+    if (!scroller) return;
+
+    const updateActiveProject = () => {
+      const cards = Array.from(scroller.children) as HTMLElement[];
+      if (cards.length === 0) return;
+
+      const center = scroller.scrollLeft + scroller.clientWidth / 2;
+      let nearestIdx = 0;
+      let nearestDist = Number.POSITIVE_INFINITY;
+
+      cards.forEach((card, idx) => {
+        const cardCenter = card.offsetLeft + card.clientWidth / 2;
+        const dist = Math.abs(cardCenter - center);
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearestIdx = idx;
+        }
+      });
+
+      setActiveProjectIndex(nearestIdx);
+    };
+
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        updateActiveProject();
+        ticking = false;
+      });
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      if (!window.matchMedia('(max-width: 1023px)').matches) return;
+      const canScrollHorizontally = scroller.scrollWidth > scroller.clientWidth;
+      if (!canScrollHorizontally) return;
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      scroller.scrollLeft += event.deltaY;
+      event.preventDefault();
+    };
+
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    scroller.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('resize', updateActiveProject);
+    updateActiveProject();
+
+    return () => {
+      scroller.removeEventListener('scroll', onScroll);
+      scroller.removeEventListener('wheel', onWheel);
+      window.removeEventListener('resize', updateActiveProject);
+    };
+  }, []);
+
+  const scrollToProjectCard = (idx: number) => {
+    const scroller = projectsMobileRef.current;
+    if (!scroller) return;
+    const cards = Array.from(scroller.children) as HTMLElement[];
+    const target = cards[idx];
+    if (!target) return;
+    scroller.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
+  };
+
+  const scrollToNextProjectCard = () => {
+    const nextIdx = Math.min(activeProjectIndex + 1, profile.projects.length - 1);
+    scrollToProjectCard(nextIdx);
+  };
 
   useGSAP(() => {
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
@@ -373,30 +444,6 @@ function App() {
       });
     }
 
-    // Project thumbnail hover
-    const thumbLinks = gsap.utils.toArray<HTMLElement>('.projectThumbLink');
-    const hoverCleanups: Array<() => void> = [];
-    thumbLinks.forEach((link) => {
-      const thumb = link.querySelector<HTMLElement>('.projectThumb');
-      if (!thumb) return;
-      const hoverAnim = gsap.to(thumb, {
-        scale: 1.04,
-        filter: 'brightness(1.05)',
-        duration: 0.35,
-        ease: 'power2.out',
-        paused: true,
-        transformOrigin: '50% 50%',
-      });
-      const onEnter = () => hoverAnim.play();
-      const onLeave = () => hoverAnim.reverse();
-      link.addEventListener('mouseenter', onEnter);
-      link.addEventListener('mouseleave', onLeave);
-      hoverCleanups.push(() => {
-        link.removeEventListener('mouseenter', onEnter);
-        link.removeEventListener('mouseleave', onLeave);
-      });
-    });
-
     ScrollTrigger.refresh();
 
     // Cleanup
@@ -408,7 +455,6 @@ function App() {
       heroPointerCleanups.forEach((fn) => fn());
       gsap.ticker.remove(updateLenis);
       lenis.destroy();
-      hoverCleanups.forEach((fn) => fn());
       ScrollTrigger.getAll().forEach(trigger => trigger.kill());
       ScrollTrigger.clearMatchMedia();
     };
@@ -480,66 +526,68 @@ function App() {
           )}
 
           {s.id === 'about' && (
-            <div className="content">
-              <div className="aboutGrid">
-                <aside className="aboutPhotoSide">
-                  <div className="aboutPhoto" aria-hidden />
-                </aside>
-                <div className="aboutMain">
-                  <div className="aboutStoryGrid">
-                    <div className="aboutBody">
-                      <p className="body">
-                        我把設計視為「讓決策更清楚」的工具，而不只是視覺包裝。我的核心工作是把模糊需求轉成可被使用、可被實作、可被迭代的介面系統。
-                      </p>
-                      <p className="body">
-                        職涯橫跨企業品牌、展覽視覺與數位產品，近年聚焦 Web UI 與前端協作，透過元件化與清楚交付規格，讓團隊更快把設計轉成可驗證的產品成果。
-                      </p>
+            <div className="aboutSection">
+              <div className="content">
+                <div className="aboutGrid">
+                  <aside className="aboutPhotoSide">
+                    <div className="aboutPhoto" aria-hidden />
+                  </aside>
+                  <div className="aboutMain">
+                    <div className="aboutStoryGrid">
+                      <div className="aboutBody">
+                        <p className="body">
+                          我把設計視為「讓決策更清楚」的工具，而不只是視覺包裝。我的核心工作是把模糊需求轉成可被使用、可被實作、可被迭代的介面系統。
+                        </p>
+                        <p className="body">
+                          職涯橫跨企業品牌、展覽視覺與數位產品，近年聚焦 Web UI 與前端協作，透過元件化與清楚交付規格，讓團隊更快把設計轉成可驗證的產品成果。
+                        </p>
+                      </div>
+
+                      <div className="experienceBlock">
+                        <h3 className="skillsTitle">Experience</h3>
+                        <ul className="aboutTimeline">
+                          <li>
+                            <span className="aboutTimelineYear">2018–2026</span>
+                            <div className="aboutTimelineBody">
+                              <p className="aboutTimelineCompany">軒昂股份有限公司</p>
+                              <p className="aboutTimelineRole">Web UI Designer</p>
+                            </div>
+                          </li>
+                          <li>
+                            <span className="aboutTimelineYear">2015–2018</span>
+                            <div className="aboutTimelineBody">
+                              <p className="aboutTimelineCompany">揚智科技</p>
+                              <p className="aboutTimelineRole">Senior Visual Designer</p>
+                            </div>
+                          </li>
+                          <li>
+                            <span className="aboutTimelineYear">2014–2015</span>
+                            <div className="aboutTimelineBody">
+                              <p className="aboutTimelineCompany">Acer 宏碁</p>
+                              <p className="aboutTimelineRole">UI Designer</p>
+                            </div>
+                          </li>
+                          <li>
+                            <span className="aboutTimelineYear">2010–2014</span>
+                            <div className="aboutTimelineBody">
+                              <p className="aboutTimelineCompany">正文科技</p>
+                              <p className="aboutTimelineRole">Visual Designer</p>
+                            </div>
+                          </li>
+                        </ul>
+                      </div>
                     </div>
 
-                    <div className="experienceBlock">
-                      <h3 className="skillsTitle">Experience</h3>
-                      <ul className="aboutTimeline">
-                        <li>
-                          <span className="aboutTimelineYear">2018–2026</span>
-                          <div className="aboutTimelineBody">
-                            <p className="aboutTimelineCompany">軒昂股份有限公司</p>
-                            <p className="aboutTimelineRole">Web UI Designer</p>
+                    <div className="skillsBlock">
+                      <h3 className="skillsTitle">Skills</h3>
+                      <div className="skillsGrid">
+                        {profile.skillGroups.map((group) => (
+                          <div key={group.title} className="skillsGroup">
+                            <p className="skillsGroupTitle">{group.title}</p>
+                            <p className="skillsLine">{group.items.join(' · ')}</p>
                           </div>
-                        </li>
-                        <li>
-                          <span className="aboutTimelineYear">2015–2018</span>
-                          <div className="aboutTimelineBody">
-                            <p className="aboutTimelineCompany">揚智科技</p>
-                            <p className="aboutTimelineRole">Senior Visual Designer</p>
-                          </div>
-                        </li>
-                        <li>
-                          <span className="aboutTimelineYear">2014–2015</span>
-                          <div className="aboutTimelineBody">
-                            <p className="aboutTimelineCompany">Acer 宏碁</p>
-                            <p className="aboutTimelineRole">UI Designer</p>
-                          </div>
-                        </li>
-                        <li>
-                          <span className="aboutTimelineYear">2010–2014</span>
-                          <div className="aboutTimelineBody">
-                            <p className="aboutTimelineCompany">正文科技</p>
-                            <p className="aboutTimelineRole">Visual Designer</p>
-                          </div>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="skillsBlock">
-                    <h3 className="skillsTitle">Skills</h3>
-                    <div className="skillsGrid">
-                      {profile.skillGroups.map((group) => (
-                        <div key={group.title} className="skillsGroup">
-                          <p className="skillsGroupTitle">{group.title}</p>
-                          <p className="skillsLine">{group.items.join(' · ')}</p>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -548,58 +596,129 @@ function App() {
           )}
 
           {s.id === 'projects' && (
-            <div className="content">
-              <div className="projectsGrid4">
-                {Array.from({ length: Math.ceil(profile.projects.length / 4) }).map((_, groupIdx) => {
-                  const start = groupIdx * 4;
-                  const group = profile.projects.slice(start, start + 4);
-                  return (
-                    <div key={`group-${start}`} className="projectsGroup">
-                      <div className="projectsRow images">
-                        {group.map((p) => {
-                          return (
-                            <a
-                              key={`img-${p.title}`}
-                              className="projectThumbLink"
-                              href={p.href}
-                              target="_blank"
-                              rel="noreferrer"
-                              aria-label={p.title}
-                            >
-                              <div className="projectThumb" aria-hidden>
-                                {p.img ? (
-                                  <img src={p.img} alt={p.title} className="projectImg" />
-                                ) : null}
-                              </div>
-                            </a>
-                          );
-                        })}
-                      </div>
+            <div className="projectsSection">
+              <div className="content">
+                <div className="projectsDesktop">
+                  <div className="projectsGrid4">
+                    {Array.from({ length: Math.ceil(profile.projects.length / 4) }).map((_, groupIdx) => {
+                      const start = groupIdx * 4;
+                      const group = profile.projects.slice(start, start + 4);
+                      return (
+                        <div key={`group-${start}`} className="projectsGroup">
+                          <div className="projectsRow images">
+                            {group.map((p, idx) => {
+                              const isFirstProject = start + idx === 0;
+                              const isSecondProject = start + idx === 1;
+                              const isFifthProject = start + idx === 4;
+                              return (
+                                <a
+                                  key={`img-${p.title}`}
+                                  className="projectThumbLink"
+                                  href={p.href}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  aria-label={p.title}
+                                >
+                                  <div className="projectThumb" aria-hidden>
+                                    {p.img ? (
+                                      <img
+                                        src={p.img}
+                                        alt={p.title}
+                                        className={`projectImg${isFirstProject ? ' projectImg--first' : ''}${isSecondProject ? ' projectImg--second' : ''}${isFifthProject ? ' projectImg--fifth' : ''}`}
+                                      />
+                                    ) : null}
+                                  </div>
+                                </a>
+                              );
+                            })}
+                          </div>
 
-                      <div className="projectsRow texts">
-                        {group.map((p) => (
-                          <a
-                            key={`txt-${p.title}`}
-                            className="projectTextLink"
-                            href={p.href}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
+                          <div className="projectsRow texts">
+                            {group.map((p) => (
+                              <a
+                                key={`txt-${p.title}`}
+                                className="projectTextLink"
+                                href={p.href}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <div className="projectMeta">
+                                  <span className="projectType">{p.tags?.[0] ?? 'Case study'}</span>
+                                </div>
+                                <h4 className="projectTitle">{p.title}</h4>
+                                <p className="projectDesc">
+                                  {p.description ??
+                                    '聚焦視覺系統與版面規範，建立一致的版面秩序與元件化規格，並能與前端協作落地。'}
+                                </p>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="projectsMobileRail">
+                  <div className="projectsMobile" aria-label="Project cards" ref={projectsMobileRef}>
+                    {profile.projects.map((p, idx) => {
+                      const isFirstProject = idx === 0;
+                      const isSecondProject = idx === 1;
+                      const isFifthProject = idx === 4;
+                      return (
+                        <a
+                          key={`mobile-${p.title}-${idx}`}
+                          className="projectCardLink"
+                          href={p.href}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <div className="projectThumbWrap">
+                            <div className="projectThumb" aria-hidden>
+                              {p.img ? (
+                                <img
+                                  src={p.img}
+                                  alt={p.title}
+                                  className={`projectImg${isFirstProject ? ' projectImg--first' : ''}${isSecondProject ? ' projectImg--second' : ''}${isFifthProject ? ' projectImg--fifth' : ''}`}
+                                />
+                              ) : null}
+                            </div>
+                          </div>
+                          <div className="projectCardText">
                             <div className="projectMeta">
-                              <span className="projectYear">{p.year ?? '—'}</span>
-                              <span className="projectDot">·</span>
                               <span className="projectType">{p.tags?.[0] ?? 'Case study'}</span>
                             </div>
                             <h4 className="projectTitle">{p.title}</h4>
                             <p className="projectDesc">
-                              假文案：聚焦視覺系統與版面規範，建立一致的版面秩序與元件化規格，並能與前端協作落地。
+                              {p.description ??
+                                '聚焦視覺系統與版面規範，建立一致的版面秩序與元件化規格，並能與前端協作落地。'}
                             </p>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    className="projectsMobileNextButton"
+                    onClick={scrollToNextProjectCard}
+                    aria-label="下一個作品"
+                    disabled={activeProjectIndex === profile.projects.length - 1}
+                  >
+                    →
+                  </button>
+                </div>
+                <div className="projectsMobileDots" aria-label="Project slide indicators">
+                  {profile.projects.map((dotProject, dotIdx) => (
+                    <button
+                      key={`dot-${dotProject.title}-${dotIdx}`}
+                      type="button"
+                      className={`projectsMobileDot${activeProjectIndex === dotIdx ? ' isActive' : ''}`}
+                      onClick={() => scrollToProjectCard(dotIdx)}
+                      aria-label={`查看第 ${dotIdx + 1} 個作品`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -659,8 +778,9 @@ function App() {
           )}
 
           {s.id === 'contact' && (
-            <div className="content">
-              <div className="contactLinks">
+            <div className="contactSection">
+              <div className="content">
+                <div className="contactLinks">
                 <a className="contactLink" href={`mailto:${profile.email}`}>
                   <svg className="contactIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round"/>
@@ -669,9 +789,7 @@ function App() {
                 </a>
                 {profile.links.behance ? (
                   <a className="contactLink" href={profile.links.behance} target="_blank" rel="noreferrer">
-                    <svg className="contactIcon" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M22 7h-7V5h7v2zm1.726 10c-.442 1.297-2.029 3-5.101 3-3.074 0-5.564-1.729-5.564-5.675 0-3.91 2.325-5.92 5.466-5.92 3.082 0 4.964 1.782 5.375 4.426.078.506.109 1.188.095 2.14H15.97c.13 1.211.994 1.738 2.041 1.738.79 0 1.474-.362 1.797-.908h3.918zM15.97 13.553h5.096c-.09-1.146-.808-1.74-1.997-1.74-1.052 0-1.895.544-2.099 1.74zM9.089 5.073H2V19h7.089c4.174 0 5.282-2.766 5.282-4.446 0-2.291-1.453-3.282-2.47-3.645 1.017-.362 2.045-1.348 2.045-3.089 0-1.68-1.109-2.747-4.857-2.747zm.524 5.747H5v-2.82h4.416c.994 0 1.652.358 1.652 1.31 0 .95-.495 1.51-1.455 1.51zm-.29 5.68H5v-3.18h4.324c1.168 0 1.652.695 1.652 1.59 0 .943-.525 1.59-1.652 1.59z"/>
-                    </svg>
+                    <img className="contactIcon" src="/behance.svg" alt="" aria-hidden="true" />
                     <span className="contactLinkText">Behance</span>
                   </a>
                 ) : null}
@@ -700,6 +818,7 @@ function App() {
                     <span className="contactLinkText">CV</span>
                   </a>
                 ) : null}
+                </div>
               </div>
             </div>
           )}
