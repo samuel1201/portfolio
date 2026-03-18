@@ -19,14 +19,20 @@ const photographyImages = [
   '/images/photography/photo-07.jpg',
   '/images/photography/photo-08.jpg',
 ];
+const resolveUrl = (url?: string) => {
+  if (!url) return undefined;
+  if (/^(https?:)?\/\//.test(url) || url.startsWith('mailto:') || url.startsWith('tel:')) return url;
+  return `${import.meta.env.BASE_URL}${url.replace(/^\//, '')}`;
+};
 
 function App() {
   const container = useRef<HTMLDivElement>(null);
   const projectsMobileRef = useRef<HTMLDivElement>(null);
   const [activeProjectIndex, setActiveProjectIndex] = useState(0);
-  const [photographyBackdropImage] = useState(
-    () => photographyImages[Math.floor(Math.random() * photographyImages.length)],
-  );
+  const [photographyBackdropImage] = useState(() => {
+    const picked = photographyImages[Math.floor(Math.random() * photographyImages.length)];
+    return resolveUrl(picked) ?? picked;
+  });
 
   useEffect(() => {
     let refreshTimer: number | null = null;
@@ -527,7 +533,7 @@ function App() {
                 <div className="aboutGrid">
                   <aside className="aboutPhotoSide">
                     <div className="aboutPhoto">
-                      <img src="/samuel_pic.jpg" alt="Samuel Wang portrait" loading="lazy" />
+                      <img src={resolveUrl('/samuel_pic.jpg')} alt="Samuel Wang portrait" loading="lazy" />
                     </div>
                   </aside>
                   <div className="aboutMain">
@@ -626,7 +632,7 @@ function App() {
                                   <div className="projectThumb" aria-hidden>
                                     {p.img ? (
                                       <img
-                                        src={p.img}
+                                        src={resolveUrl(p.img)}
                                         alt={p.title}
                                         className={`projectImg${isFirstProject ? ' projectImg--first' : ''}${isSecondProject ? ' projectImg--second' : ''}${isFifthProject ? ' projectImg--fifth' : ''}`}
                                       />
@@ -642,7 +648,7 @@ function App() {
                               <a
                                 key={`txt-${p.title}`}
                                 className="projectTextLink"
-                                href={p.href}
+                                href={resolveUrl(p.href)}
                                 target="_blank"
                                 rel="noreferrer"
                               >
@@ -673,7 +679,7 @@ function App() {
                         <a
                           key={`mobile-${p.title}-${idx}`}
                           className="projectCardLink"
-                          href={p.href}
+                          href={resolveUrl(p.href)}
                           target="_blank"
                           rel="noreferrer"
                         >
@@ -681,7 +687,7 @@ function App() {
                             <div className="projectThumb" aria-hidden>
                               {p.img ? (
                                 <img
-                                  src={p.img}
+                                  src={resolveUrl(p.img)}
                                   alt={p.title}
                                   className={`projectImg${isFirstProject ? ' projectImg--first' : ''}${isSecondProject ? ' projectImg--second' : ''}${isFifthProject ? ' projectImg--fifth' : ''}`}
                                 />
@@ -729,56 +735,56 @@ function App() {
                 <div className="photoGallery">
                   <div className="photoSlide">
                     <img
-                      src="/images/photography/photo-01.jpg"
+                      src={resolveUrl('/images/photography/photo-01.jpg')}
                       alt="Photography cover 01"
                       loading="lazy"
                     />
                   </div>
                   <div className="photoSlide">
                     <img
-                      src="/images/photography/photo-02.jpg"
+                      src={resolveUrl('/images/photography/photo-02.jpg')}
                       alt="Photography cover 02"
                       loading="lazy"
                     />
                   </div>
                   <div className="photoSlide">
                     <img
-                      src="/images/photography/photo-03.jpg"
+                      src={resolveUrl('/images/photography/photo-03.jpg')}
                       alt="Photography cover 03"
                       loading="lazy"
                     />
                   </div>
                   <div className="photoSlide">
                     <img
-                      src="/images/photography/photo-04.jpg"
+                      src={resolveUrl('/images/photography/photo-04.jpg')}
                       alt="Photography cover 04"
                       loading="lazy"
                     />
                   </div>
                   <div className="photoSlide">
                     <img
-                      src="/images/photography/photo-05.jpg"
+                      src={resolveUrl('/images/photography/photo-05.jpg')}
                       alt="Photography cover 05"
                       loading="lazy"
                     />
                   </div>
                   <div className="photoSlide">
                     <img
-                      src="/images/photography/photo-06.jpg"
+                      src={resolveUrl('/images/photography/photo-06.jpg')}
                       alt="Photography cover 06"
                       loading="lazy"
                     />
                   </div>
                   <div className="photoSlide">
                     <img
-                      src="/images/photography/photo-07.jpg"
+                      src={resolveUrl('/images/photography/photo-07.jpg')}
                       alt="Photography cover 07"
                       loading="lazy"
                     />
                   </div>
                   <div className="photoSlide">
                     <img
-                      src="/images/photography/photo-08.jpg"
+                      src={resolveUrl('/images/photography/photo-08.jpg')}
                       alt="Photography cover 08"
                       loading="lazy"
                     />
@@ -823,7 +829,7 @@ function App() {
                   </a>
                 ) : null}
                 {profile.links.cv ? (
-                  <a className="contactLink" href={profile.links.cv} target="_blank" rel="noreferrer">
+                  <a className="contactLink" href={resolveUrl(profile.links.cv)} target="_blank" rel="noreferrer">
                     <svg className="contactIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M14 3v5h5M9 13h6M9 17h6" strokeLinecap="round" strokeLinejoin="round"/>
