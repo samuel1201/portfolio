@@ -603,10 +603,10 @@ function App() {
             <div className="projectsSection">
               <div className="content">
                 <div className="projectsDesktop">
-                  <div className="projectsGrid4">
-                    {Array.from({ length: Math.ceil(profile.projects.length / 4) }).map((_, groupIdx) => {
-                      const start = groupIdx * 4;
-                      const group = profile.projects.slice(start, start + 4);
+                  <div className="projectsGrid3">
+                    {Array.from({ length: Math.ceil(profile.projects.length / 3) }).map((_, groupIdx) => {
+                      const start = groupIdx * 3;
+                      const group = profile.projects.slice(start, start + 3);
                       return (
                         <div key={`group-${start}`} className="projectsGroup">
                           <div className="projectsRow images">

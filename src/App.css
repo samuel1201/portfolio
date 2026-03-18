@@ -945,7 +945,7 @@ section a {
   color: currentColor;
 }
 
-.projectsGrid4 {
+.projectsGrid3 {
   display: grid;
   gap: var(--space-8, 64px);
 }
@@ -979,7 +979,7 @@ section a {
 
 .projectsRow {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: calc(var(--space-5, 24px) * 2);
 }
 
