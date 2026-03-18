@@ -18,7 +18,7 @@
   background-blend-mode: normal;
   border-top: 1px solid var(--color-border, rgba(24, 24, 27, 0.06));
   box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.7) inset;
-  padding: var(--section-pad-top, clamp(96px, 12vh, 160px)) 0 var(--section-pad-bottom, clamp(72px, 10vh, 140px));
+  padding: var(--section-pad-top, clamp(48px, 6vh, 84px)) 0 var(--section-pad-bottom, clamp(72px, 10vh, 140px));
   color: var(--color-text, #18181B);
 }
 

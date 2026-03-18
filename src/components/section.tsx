@@ -6,15 +6,16 @@ interface SectionProps {
   bgColor: string;
   children?: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export const Section = ({ id, title, bgColor, children, className = '' }: SectionProps) => {
+export const Section = ({ id, title, bgColor, children, className = '', style }: SectionProps) => {
   const theme: 'light' | 'dark' = bgColor.toLowerCase() === '#1d1d1d' ? 'dark' : 'light';
   return (
     <section
       id={id}
       className={`${styles.section} panel ${className}`}
-      style={{ '--section-bg': bgColor } as React.CSSProperties}
+      style={{ '--section-bg': bgColor, ...style } as React.CSSProperties}
       data-color={bgColor}
       data-theme={theme}
     >

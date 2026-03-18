@@ -9,35 +9,47 @@ import { profile, resumeSections } from './data/profile';
 import './App.css'
 
 gsap.registerPlugin(ScrollTrigger);
-
-const navSections = ['hero', 'about', 'projects', 'photography', 'contact'];
-const navLabels = ['Hello!', 'Resume', 'Graphic', 'Photography', 'Contact'];
+const photographyImages = [
+  '/images/photography/photo-01.jpg',
+  '/images/photography/photo-02.jpg',
+  '/images/photography/photo-03.jpg',
+  '/images/photography/photo-04.jpg',
+  '/images/photography/photo-05.jpg',
+  '/images/photography/photo-06.jpg',
+  '/images/photography/photo-07.jpg',
+  '/images/photography/photo-08.jpg',
+];
 
 function App() {
   const container = useRef<HTMLDivElement>(null);
   const projectsMobileRef = useRef<HTMLDivElement>(null);
-  const [activeSection, setActiveSection] = useState('hero');
-  const [navTheme, setNavTheme] = useState<'light' | 'dark'>('light');
   const [activeProjectIndex, setActiveProjectIndex] = useState(0);
+  const [photographyBackdropImage] = useState(
+    () => photographyImages[Math.floor(Math.random() * photographyImages.length)],
+  );
 
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollPos = window.scrollY + window.innerHeight / 2;
-      
-      for (let i = navSections.length - 1; i >= 0; i--) {
-        const el = document.getElementById(navSections[i]);
-        if (el && el.offsetTop <= scrollPos) {
-          setActiveSection(navSections[i]);
-          const sectionTheme = el.getAttribute('data-theme');
-          setNavTheme(sectionTheme === 'dark' ? 'dark' : 'light');
-          break;
-        }
+    let refreshTimer: number | null = null;
+
+    const onResize = () => {
+      if (refreshTimer !== null) {
+        window.clearTimeout(refreshTimer);
       }
+
+      // Recalculate scroll/pin values without hard reloading the whole page.
+      refreshTimer = window.setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 260);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('resize', onResize, { passive: true });
+
+    return () => {
+      if (refreshTimer !== null) {
+        window.clearTimeout(refreshTimer);
+      }
+      window.removeEventListener('resize', onResize);
+    };
   }, []);
 
   useEffect(() => {
@@ -102,11 +114,6 @@ function App() {
     const target = cards[idx];
     if (!target) return;
     scroller.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
-  };
-
-  const scrollToNextProjectCard = () => {
-    const nextIdx = Math.min(activeProjectIndex + 1, profile.projects.length - 1);
-    scrollToProjectCard(nextIdx);
   };
 
   useGSAP(() => {
@@ -391,47 +398,49 @@ function App() {
       },
     });
 
-    // Horizontal gallery (desktop only)
+    // Horizontal gallery (desktop only, >=1024)
     const photoGallery = container.current?.querySelector<HTMLElement>('.photoGallery');
     const photoSection = container.current?.querySelector<HTMLElement>('#photography');
-    const isMobile = window.innerWidth <= 768;
     
-    if (photoGallery && photoSection && !isMobile) {
-      const getScrollAmount = () => {
-        const galleryWidth = photoGallery.scrollWidth;
-        const viewportWidth = window.innerWidth;
-        const galleryPadding = parseFloat(getComputedStyle(photoGallery).paddingLeft) || 0;
-        return galleryWidth - viewportWidth + galleryPadding;
-      };
+    if (photoGallery && photoSection) {
+      const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
 
-      gsap.to(photoGallery, {
-        x: () => -getScrollAmount(),
-        ease: 'none',
-        scrollTrigger: {
-          trigger: photoSection,
-          start: 'top top',
-          end: () => `+=${getScrollAmount()}`,
-          pin: true,
-          scrub: 1,
-          invalidateOnRefresh: true,
-        },
-      });
-    }
-    // Nav dots
-    const allNavDots = gsap.utils.toArray<HTMLElement>('.navDot');
-    if (allNavDots.length > 0) {
-      gsap.to(allNavDots, {
-        y: -4,
-        duration: 0.4,
-        ease: 'power1.inOut',
-        stagger: {
-          each: 0.08,
-          repeat: -1,
-          yoyo: true,
-        },
-      });
-    }
+      if (isDesktop) {
+        const getScrollAmount = () => {
+          const galleryWidth = photoGallery.scrollWidth;
+          const viewportWidth = window.innerWidth;
+          const galleryPadding = parseFloat(getComputedStyle(photoGallery).paddingLeft) || 0;
+          return galleryWidth - viewportWidth + galleryPadding;
+        };
+        const travel = Math.max(getScrollAmount(), 0);
+        if (travel > 0) {
+          // Keep a brief head/tail hold for orientation, but avoid a sticky feel.
+          const edgeHold = Math.round(Math.max(180, Math.min(320, window.innerHeight * 0.26)));
+          const totalDistance = travel + edgeHold * 2;
 
+          const horizontalTl = gsap.timeline({
+            scrollTrigger: {
+              trigger: photoSection,
+              start: 'top top',
+              end: `+=${totalDistance}`,
+              pin: true,
+              scrub: 1,
+              anticipatePin: 1,
+              fastScrollEnd: false,
+              invalidateOnRefresh: true,
+            },
+          });
+
+          horizontalTl
+            .to(photoGallery, { x: 0, ease: 'none', duration: edgeHold })
+            .to(photoGallery, { x: -travel, ease: 'none', duration: travel })
+            .to(photoGallery, { x: -travel, ease: 'none', duration: edgeHold });
+        }
+      } else {
+        // <=1023 uses native horizontal scroll; ensure no leftover desktop transform.
+        gsap.set(photoGallery, { clearProps: 'transform' });
+      }
+    }
     // Section title accent line
     const titleLines = gsap.utils.toArray<HTMLElement>('.titleLine');
     if (titleLines.length > 0) {
@@ -460,34 +469,21 @@ function App() {
     };
   }, { scope: container, revertOnUpdate: true });
 
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <main ref={container}>
-      <nav className="fixedNav" data-theme={navTheme}>
-        {navSections.map((id, i) => (
-          <button
-            key={id}
-            className={`navItem ${activeSection === id ? 'active' : ''}`}
-            onClick={() => scrollToSection(id)}
-          >
-            <span className="navDots">
-              <span className="navDot"></span>
-              <span className="navDot"></span>
-              <span className="navDot"></span>
-            </span>
-            {navLabels[i]}
-          </button>
-        ))}
-      </nav>
-
       {resumeSections.map((s) => (
-        <Section key={s.id} id={s.id} title={s.title} bgColor={s.color}>
+        <Section
+          key={s.id}
+          id={s.id}
+          title={s.title}
+          bgColor={s.color}
+          className={s.id === 'photography' ? 'sectionWithPhotoBackdrop' : ''}
+          style={
+            s.id === 'photography'
+              ? ({ '--photo-backdrop-image': `url(${photographyBackdropImage})` } as React.CSSProperties)
+              : undefined
+          }
+        >
           {s.id === 'hero' && (
             <div className="content hero">
               <Decor className="heroDecor" />
@@ -516,7 +512,7 @@ function App() {
                   </span>
                 </h1>
                 <p className="heroBody heroBodyAnimated">
-                  我把複雜需求轉成可實作、可驗證的介面系統。
+                  專長 Web UI 與前端協作，能在設計階段納入元件化思維，讓設計到開發的轉換更順暢。
                 </p>
                 <div className="scrollHint" aria-hidden>
                   <span className="scrollDot" />
@@ -530,16 +526,18 @@ function App() {
               <div className="content">
                 <div className="aboutGrid">
                   <aside className="aboutPhotoSide">
-                    <div className="aboutPhoto" aria-hidden />
+                    <div className="aboutPhoto">
+                      <img src="/samuel_pic.jpg" alt="Samuel Wang portrait" loading="lazy" />
+                    </div>
                   </aside>
                   <div className="aboutMain">
                     <div className="aboutStoryGrid">
                       <div className="aboutBody">
                         <p className="body">
-                          我把設計視為「讓決策更清楚」的工具，而不只是視覺包裝。我的核心工作是把模糊需求轉成可被使用、可被實作、可被迭代的介面系統。
+                          從事設計相關工作多年，職涯早期以網頁與平面設計為主，之後參與企業品牌、展覽視覺以及數位產品 UI 設計。過去曾任職於宏碁、正文科技、揚智科技等公司，接觸過不同規模的設計專案與產品開發流程。
                         </p>
                         <p className="body">
-                          職涯橫跨企業品牌、展覽視覺與數位產品，近年聚焦 Web UI 與前端協作，透過元件化與清楚交付規格，讓團隊更快把設計轉成可驗證的產品成果。
+                          近幾年主要的工作重心放在 Web UI 設計與前端協作，實務上大量接觸 React 與 CSS 架構，建立與前端工程師更順暢的溝通方式，讓設計稿能更貼近實際開發流程並提升協作效率，同時累積更多產品開發相關經驗。目前希望能往資深產品設計或設計整合的角色發展，除了設計本身，也希望能參與更多產品規劃與跨部門合作的工作。
                         </p>
                       </div>
 
@@ -584,7 +582,13 @@ function App() {
                         {profile.skillGroups.map((group) => (
                           <div key={group.title} className="skillsGroup">
                             <p className="skillsGroupTitle">{group.title}</p>
-                            <p className="skillsLine">{group.items.join(' · ')}</p>
+                            <ul className="skillsChips" aria-label={`${group.title} skills`}>
+                              {group.items.map((item) => (
+                                <li key={`${group.title}-${item}`} className="skillsChip">
+                                  {item}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         ))}
                       </div>
@@ -698,15 +702,6 @@ function App() {
                       );
                     })}
                   </div>
-                  <button
-                    type="button"
-                    className="projectsMobileNextButton"
-                    onClick={scrollToNextProjectCard}
-                    aria-label="下一個作品"
-                    disabled={activeProjectIndex === profile.projects.length - 1}
-                  >
-                    →
-                  </button>
                 </div>
                 <div className="projectsMobileDots" aria-label="Project slide indicators">
                   {profile.projects.map((dotProject, dotIdx) => (
@@ -727,50 +722,66 @@ function App() {
             <div className="photographySection">
               <div className="photographyIntro content">
                 <p className="body">
-                  除了設計工作，攝影是我記錄生活與觀察世界的方式。這裡收錄了一些日常隨拍與旅行紀錄。
+                  除了設計工作，攝影是我記錄生活與觀察世界的方式，這裡收錄了一些日常隨拍與旅行紀錄。
                 </p>
               </div>
               <div className="photoGalleryWrapper">
                 <div className="photoGallery">
                   <div className="photoSlide">
-                    <div className="photoPlaceholder">
-                      <span className="photoPlaceholderText">01</span>
-                    </div>
+                    <img
+                      src="/images/photography/photo-01.jpg"
+                      alt="Photography cover 01"
+                      loading="lazy"
+                    />
                   </div>
                   <div className="photoSlide">
-                    <div className="photoPlaceholder">
-                      <span className="photoPlaceholderText">02</span>
-                    </div>
+                    <img
+                      src="/images/photography/photo-02.jpg"
+                      alt="Photography cover 02"
+                      loading="lazy"
+                    />
                   </div>
                   <div className="photoSlide">
-                    <div className="photoPlaceholder">
-                      <span className="photoPlaceholderText">03</span>
-                    </div>
+                    <img
+                      src="/images/photography/photo-03.jpg"
+                      alt="Photography cover 03"
+                      loading="lazy"
+                    />
                   </div>
                   <div className="photoSlide">
-                    <div className="photoPlaceholder">
-                      <span className="photoPlaceholderText">04</span>
-                    </div>
+                    <img
+                      src="/images/photography/photo-04.jpg"
+                      alt="Photography cover 04"
+                      loading="lazy"
+                    />
                   </div>
                   <div className="photoSlide">
-                    <div className="photoPlaceholder">
-                      <span className="photoPlaceholderText">05</span>
-                    </div>
+                    <img
+                      src="/images/photography/photo-05.jpg"
+                      alt="Photography cover 05"
+                      loading="lazy"
+                    />
                   </div>
                   <div className="photoSlide">
-                    <div className="photoPlaceholder">
-                      <span className="photoPlaceholderText">06</span>
-                    </div>
+                    <img
+                      src="/images/photography/photo-06.jpg"
+                      alt="Photography cover 06"
+                      loading="lazy"
+                    />
                   </div>
                   <div className="photoSlide">
-                    <div className="photoPlaceholder">
-                      <span className="photoPlaceholderText">07</span>
-                    </div>
+                    <img
+                      src="/images/photography/photo-07.jpg"
+                      alt="Photography cover 07"
+                      loading="lazy"
+                    />
                   </div>
                   <div className="photoSlide">
-                    <div className="photoPlaceholder">
-                      <span className="photoPlaceholderText">08</span>
-                    </div>
+                    <img
+                      src="/images/photography/photo-08.jpg"
+                      alt="Photography cover 08"
+                      loading="lazy"
+                    />
                   </div>
                 </div>
               </div>
@@ -789,7 +800,9 @@ function App() {
                 </a>
                 {profile.links.behance ? (
                   <a className="contactLink" href={profile.links.behance} target="_blank" rel="noreferrer">
-                    <img className="contactIcon" src="/behance.svg" alt="" aria-hidden="true" />
+                    <svg className="contactIcon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                      <path d="M4.654 3c.461 0 .887.035 1.278.14.39.07.711.216.996.391s.497.426.641.747c.14.32.216.711.216 1.137 0 .496-.106.922-.356 1.242-.215.32-.566.606-.997.817.606.176 1.067.496 1.348.922s.461.957.461 1.563c0 .496-.105.922-.285 1.278a2.3 2.3 0 0 1-.782.887c-.32.215-.711.39-1.137.496a5.3 5.3 0 0 1-1.278.176L0 12.803V3zm-.285 3.978c.39 0 .71-.105.957-.285.246-.18.355-.497.355-.887 0-.216-.035-.426-.105-.567a1 1 0 0 0-.32-.355 1.8 1.8 0 0 0-.461-.176c-.176-.035-.356-.035-.567-.035H2.17v2.31c0-.005 2.2-.005 2.2-.005zm.105 4.193c.215 0 .426-.035.606-.07.176-.035.356-.106.496-.216s.25-.215.356-.39c.07-.176.14-.391.14-.641 0-.496-.14-.852-.426-1.102-.285-.215-.676-.32-1.137-.32H2.17v2.734h2.305zm6.858-.035q.428.427 1.278.426c.39 0 .746-.106 1.032-.286q.426-.32.53-.64h1.74c-.286.851-.712 1.457-1.278 1.848-.566.355-1.243.566-2.06.566a4.1 4.1 0 0 1-1.527-.285 2.8 2.8 0 0 1-1.137-.782 2.85 2.85 0 0 1-.712-1.172c-.175-.461-.25-.957-.25-1.528 0-.531.07-1.032.25-1.493.18-.46.426-.852.747-1.207.32-.32.711-.606 1.137-.782a4 4 0 0 1 1.493-.285c.606 0 1.137.105 1.598.355.46.25.817.532 1.102.958.285.39.496.851.641 1.348.07.496.105.996.07 1.563h-5.15c0 .58.21 1.11.496 1.396m2.24-3.732c-.25-.25-.642-.391-1.103-.391-.32 0-.566.07-.781.176s-.356.25-.496.39a.96.96 0 0 0-.25.497c-.036.175-.07.32-.07.46h3.196c-.07-.526-.25-.882-.497-1.132zm-3.127-3.728h3.978v.957h-3.978z"/>
+                    </svg>
                     <span className="contactLinkText">Behance</span>
                   </a>
                 ) : null}

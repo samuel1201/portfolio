@@ -37,15 +37,21 @@ export type ResumeSection = {
 export const profile: Profile = {
   name: 'Samuel Wang',
   summary:
-    '專長於 Web UI 設計與前端協作流程，熟悉設計稿與前端開發之間的轉換與溝通，能在設計階段就考慮元件化與實作可行性，協助設計與工程團隊建立更順暢的協作方式。',
+    '專長 Web UI 與前端協作，能在設計階段納入元件化思維，讓設計到開發的轉換更順暢。',
   email: 'samuel1201@gmail.com',
   links: {
     behance: 'https://www.behance.net/samuel1201',
     github: 'https://github.com/samuel1201',
+    linkedin: 'https://www.linkedin.com/in/samuel-wang-3a987bb1/',
+    cv: '/samuel_portfolio.pdf',
   },
   skillGroups: [
-    { title: 'Frontend', items: ['React', 'TypeScript', 'GSAP'] },
-    { title: 'UI Systems', items: ['Component thinking', 'Design handoff', 'Interaction rhythm'] },
+    { title: 'Design', items: ['Photoshop', 'Illustrator', 'Lightroom', 'Figma'] },
+    {
+      title: 'Front-end',
+      items: ['HTML', 'CSS', 'GSAP', 'JavaScript (Basic)', 'React CSS', 'Styled-Components'],
+    },
+    { title: 'Tools', items: ['Git', 'Cursor'] },
   ],
   projects: [
     {
