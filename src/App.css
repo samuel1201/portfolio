@@ -1333,10 +1333,13 @@ section[data-theme='dark'] .projectThumb {
   display: grid;
   place-items: center;
   padding: 22px;
+  overflow: auto;
+  box-sizing: border-box;
 }
 
 .privateShowcasePanel {
   width: min(94vw, 1080px);
+  max-width: 100%;
   height: 90vh;
   max-height: 90vh;
   overflow: hidden;
@@ -1347,6 +1350,7 @@ section[data-theme='dark'] .projectThumb {
   padding: 0;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .privateShowcaseHeader {
@@ -1382,14 +1386,17 @@ section[data-theme='dark'] .projectThumb {
 .privateShowcaseContent {
   flex: 1;
   min-height: 0;
-  overflow: auto;
-  padding: 24px 28px 40px;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 28px 32px 48px;
   display: grid;
-  gap: var(--space-6, 32px);
+  gap: 44px;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(24, 24, 27, 0.34) transparent;
+  box-sizing: border-box;
 }
 
 .privateShowcaseIntro,
@@ -1397,12 +1404,14 @@ section[data-theme='dark'] .projectThumb {
 .privateShowcaseCardDesc,
 .privateShowcaseImageCaption {
   font-size: 0.9375rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .privateShowcaseIntro {
   margin: 0;
   line-height: 1.75;
-  color: rgba(24, 24, 27, 0.76);
+  color: rgba(24, 24, 27, 0.88);
 }
 
 .privateShowcaseBullets {
@@ -1410,7 +1419,7 @@ section[data-theme='dark'] .projectThumb {
   padding-left: 18px;
   display: grid;
   gap: 6px;
-  color: rgba(24, 24, 27, 0.7);
+  color: rgba(24, 24, 27, 0.84);
   line-height: 1.68;
 }
 
@@ -1431,6 +1440,7 @@ section[data-theme='dark'] .projectThumb {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-5, 24px);
+  min-width: 0;
 }
 
 .privateShowcaseImageSingle {
@@ -1438,13 +1448,13 @@ section[data-theme='dark'] .projectThumb {
   max-width: 100%;
   min-width: 0;
   display: grid;
-  gap: var(--space-3, 12px);
+  gap: var(--space-4, 16px);
 }
 
 .privateShowcaseImageCaption {
   margin: 0;
   line-height: 1.5;
-  color: rgba(24, 24, 27, 0.62);
+  color: rgba(24, 24, 27, 0.84);
 }
 
 .privateShowcaseImageSingle .privateShowcaseImage {
@@ -1466,6 +1476,7 @@ section[data-theme='dark'] .projectThumb {
   object-fit: cover;
 }
 
+
 .privateShowcaseTextBlock {
   border-top: 1px solid rgba(24, 24, 27, 0.1);
   padding-top: var(--space-5, 24px);
@@ -1481,19 +1492,32 @@ section[data-theme='dark'] .projectThumb {
 .privateShowcaseCardDesc {
   margin: 0;
   line-height: 1.68;
-  color: rgba(24, 24, 27, 0.7);
+  color: rgba(24, 24, 27, 0.84);
 }
 
 @media (max-width: 900px) {
   .privateShowcasePanel {
     width: min(96vw, 1080px);
+    max-width: calc(100vw - 24px);
   }
 }
 
 @media (max-width: 640px) {
+  .privateShowcaseOverlay {
+    padding: 10px;
+  }
+
+  .privateShowcasePanel {
+    width: 100%;
+  }
+
+  .privateShowcaseHeader {
+    padding: 12px 16px;
+  }
+
   .privateShowcaseContent {
-    padding: 20px 20px 28px;
-    gap: var(--space-5, 24px);
+    padding: 20px 16px 32px;
+    gap: 36px;
   }
 
   .privateShowcaseImageRow {
