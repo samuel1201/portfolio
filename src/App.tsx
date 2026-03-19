@@ -5,7 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import { Section } from './components/section'
 import { Decor } from './components/Decor';
-import { profile, resumeSections } from './data/profile';
+import { profile, resumeSections, type Project } from './data/profile';
 import './App.css'
 
 gsap.registerPlugin(ScrollTrigger);
@@ -29,10 +29,20 @@ function App() {
   const container = useRef<HTMLDivElement>(null);
   const projectsMobileRef = useRef<HTMLDivElement>(null);
   const [activeProjectIndex, setActiveProjectIndex] = useState(0);
+  const [isPrivateModalOpen, setIsPrivateModalOpen] = useState(false);
+  const [isPrivateShowcaseOpen, setIsPrivateShowcaseOpen] = useState(false);
+  const [privatePassword, setPrivatePassword] = useState('');
+  const [privatePasswordError, setPrivatePasswordError] = useState('');
   const [photographyBackdropImage] = useState(() => {
     const picked = photographyImages[Math.floor(Math.random() * photographyImages.length)];
     return resolveUrl(picked) ?? picked;
   });
+  const lockedProject: Project & { isLocked: true } = {
+    title: '非公開作品',
+    tags: ['Private'],
+    isLocked: true,
+  };
+  const projectCards: Array<Project & { isLocked?: boolean }> = [...profile.projects, lockedProject];
 
   useEffect(() => {
     let refreshTimer: number | null = null;
@@ -120,6 +130,48 @@ function App() {
     const target = cards[idx];
     if (!target) return;
     scroller.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
+  };
+
+  const openPrivateModal = () => {
+    setPrivatePassword('');
+    setPrivatePasswordError('');
+    setIsPrivateModalOpen(true);
+  };
+
+  const closePrivateModal = () => {
+    setIsPrivateModalOpen(false);
+    setPrivatePassword('');
+    setPrivatePasswordError('');
+  };
+
+  const closePrivateShowcase = () => {
+    setIsPrivateShowcaseOpen(false);
+  };
+
+  useEffect(() => {
+    const shouldLockScroll = isPrivateModalOpen || isPrivateShowcaseOpen;
+    if (!shouldLockScroll) return;
+
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [isPrivateModalOpen, isPrivateShowcaseOpen]);
+
+  const submitPrivatePassword = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (privatePassword !== '1201') {
+      setPrivatePasswordError('密碼錯誤。');
+      return;
+    }
+    setIsPrivateShowcaseOpen(true);
+    closePrivateModal();
   };
 
   useGSAP(() => {
@@ -610,9 +662,9 @@ function App() {
               <div className="content">
                 <div className="projectsDesktop">
                   <div className="projectsGrid3">
-                    {Array.from({ length: Math.ceil(profile.projects.length / 3) }).map((_, groupIdx) => {
+                    {Array.from({ length: Math.ceil(projectCards.length / 3) }).map((_, groupIdx) => {
                       const start = groupIdx * 3;
-                      const group = profile.projects.slice(start, start + 3);
+                      const group = projectCards.slice(start, start + 3);
                       return (
                         <div key={`group-${start}`} className="projectsGroup">
                           <div className="projectsRow images">
@@ -620,47 +672,85 @@ function App() {
                               const isFirstProject = start + idx === 0;
                               const isSecondProject = start + idx === 1;
                               const isFifthProject = start + idx === 4;
+                              const isLockedProject = p.isLocked === true;
                               return (
-                                <a
-                                  key={`img-${p.title}`}
-                                  className="projectThumbLink"
-                                  href={p.href}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  aria-label={p.title}
-                                >
-                                  <div className="projectThumb" aria-hidden>
-                                    {p.img ? (
-                                      <img
-                                        src={resolveUrl(p.img)}
-                                        alt={p.title}
-                                        className={`projectImg${isFirstProject ? ' projectImg--first' : ''}${isSecondProject ? ' projectImg--second' : ''}${isFifthProject ? ' projectImg--fifth' : ''}`}
-                                      />
-                                    ) : null}
-                                  </div>
-                                </a>
+                                isLockedProject ? (
+                                  <button
+                                    key={`img-${p.title}`}
+                                    type="button"
+                                    className="projectThumbLink projectThumbLink--locked"
+                                    onClick={openPrivateModal}
+                                    aria-label="開啟非公開作品密碼視窗"
+                                  >
+                                    <div className="projectThumb projectThumb--locked" aria-hidden>
+                                      <div className="projectLockBadge">
+                                        <span className="projectLockIcon">
+                                          <svg className="projectLockIconSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                                            <path d="M8 10V7.5A4 4 0 0 1 12 3.5a4 4 0 0 1 4 4V10" strokeLinecap="round" strokeLinejoin="round" />
+                                            <rect x="6.5" y="10" width="11" height="10" rx="2.2" />
+                                            <path d="M12 14.2v2.6" strokeLinecap="round" />
+                                          </svg>
+                                        </span>
+                                        <span className="projectLockText">Private</span>
+                                      </div>
+                                    </div>
+                                  </button>
+                                ) : (
+                                  <a
+                                    key={`img-${p.title}`}
+                                    className="projectThumbLink"
+                                    href={resolveUrl(p.href)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    aria-label={p.title}
+                                  >
+                                    <div className="projectThumb" aria-hidden>
+                                      {p.img ? (
+                                        <img
+                                          src={resolveUrl(p.img)}
+                                          alt={p.title}
+                                          className={`projectImg${isFirstProject ? ' projectImg--first' : ''}${isSecondProject ? ' projectImg--second' : ''}${isFifthProject ? ' projectImg--fifth' : ''}`}
+                                        />
+                                      ) : null}
+                                    </div>
+                                  </a>
+                                )
                               );
                             })}
                           </div>
 
                           <div className="projectsRow texts">
                             {group.map((p) => (
-                              <a
-                                key={`txt-${p.title}`}
-                                className="projectTextLink"
-                                href={resolveUrl(p.href)}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                <div className="projectMeta">
-                                  <span className="projectType">{p.tags?.[0] ?? 'Case study'}</span>
-                                </div>
-                                <h4 className="projectTitle">{p.title}</h4>
-                                <p className="projectDesc">
-                                  {p.description ??
-                                    '聚焦視覺系統與版面規範，建立一致的版面秩序與元件化規格，並能與前端協作落地。'}
-                                </p>
-                              </a>
+                              p.isLocked ? (
+                                <button
+                                  key={`txt-${p.title}`}
+                                  type="button"
+                                  className="projectTextLink projectTextLink--locked"
+                                  onClick={openPrivateModal}
+                                >
+                                  <div className="projectMeta">
+                                    <span className="projectType">{p.tags?.[0] ?? 'Case study'}</span>
+                                  </div>
+                                  <h4 className="projectTitle">{p.title}</h4>
+                                </button>
+                              ) : (
+                                <a
+                                  key={`txt-${p.title}`}
+                                  className="projectTextLink"
+                                  href={resolveUrl(p.href)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <div className="projectMeta">
+                                    <span className="projectType">{p.tags?.[0] ?? 'Case study'}</span>
+                                  </div>
+                                  <h4 className="projectTitle">{p.title}</h4>
+                                  <p className="projectDesc">
+                                    {p.description ??
+                                      '聚焦視覺系統與版面規範，建立一致的版面秩序與元件化規格，並能與前端協作落地。'}
+                                  </p>
+                                </a>
+                              )
                             ))}
                           </div>
                         </div>
@@ -671,52 +761,83 @@ function App() {
 
                 <div className="projectsMobileRail">
                   <div className="projectsMobile" aria-label="Project cards" ref={projectsMobileRef}>
-                    {profile.projects.map((p, idx) => {
+                    {projectCards.map((p, idx) => {
                       const isFirstProject = idx === 0;
                       const isSecondProject = idx === 1;
                       const isFifthProject = idx === 4;
+                      const isLockedProject = p.isLocked === true;
                       return (
-                        <a
-                          key={`mobile-${p.title}-${idx}`}
-                          className="projectCardLink"
-                          href={resolveUrl(p.href)}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <div className="projectThumbWrap">
-                            <div className="projectThumb" aria-hidden>
-                              {p.img ? (
-                                <img
-                                  src={resolveUrl(p.img)}
-                                  alt={p.title}
-                                  className={`projectImg${isFirstProject ? ' projectImg--first' : ''}${isSecondProject ? ' projectImg--second' : ''}${isFifthProject ? ' projectImg--fifth' : ''}`}
-                                />
-                              ) : null}
+                        isLockedProject ? (
+                          <button
+                            key={`mobile-${p.title}-${idx}`}
+                            type="button"
+                            className="projectCardLink projectCardLink--locked"
+                            onClick={openPrivateModal}
+                          >
+                            <div className="projectThumbWrap">
+                              <div className="projectThumb projectThumb--locked" aria-hidden>
+                                <div className="projectLockBadge">
+                                  <span className="projectLockIcon">
+                                    <svg className="projectLockIconSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                                      <path d="M8 10V7.5A4 4 0 0 1 12 3.5a4 4 0 0 1 4 4V10" strokeLinecap="round" strokeLinejoin="round" />
+                                      <rect x="6.5" y="10" width="11" height="10" rx="2.2" />
+                                      <path d="M12 14.2v2.6" strokeLinecap="round" />
+                                    </svg>
+                                  </span>
+                                  <span className="projectLockText">Private</span>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                          <div className="projectCardText">
-                            <div className="projectMeta">
-                              <span className="projectType">{p.tags?.[0] ?? 'Case study'}</span>
+                            <div className="projectCardText">
+                              <div className="projectMeta">
+                                <span className="projectType">{p.tags?.[0] ?? 'Case study'}</span>
+                              </div>
+                              <h4 className="projectTitle">{p.title}</h4>
                             </div>
-                            <h4 className="projectTitle">{p.title}</h4>
-                            <p className="projectDesc">
-                              {p.description ??
-                                '聚焦視覺系統與版面規範，建立一致的版面秩序與元件化規格，並能與前端協作落地。'}
-                            </p>
-                          </div>
-                        </a>
+                          </button>
+                        ) : (
+                          <a
+                            key={`mobile-${p.title}-${idx}`}
+                            className="projectCardLink"
+                            href={resolveUrl(p.href)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <div className="projectThumbWrap">
+                              <div className="projectThumb" aria-hidden>
+                                {p.img ? (
+                                  <img
+                                    src={resolveUrl(p.img)}
+                                    alt={p.title}
+                                    className={`projectImg${isFirstProject ? ' projectImg--first' : ''}${isSecondProject ? ' projectImg--second' : ''}${isFifthProject ? ' projectImg--fifth' : ''}`}
+                                  />
+                                ) : null}
+                              </div>
+                            </div>
+                            <div className="projectCardText">
+                              <div className="projectMeta">
+                                <span className="projectType">{p.tags?.[0] ?? 'Case study'}</span>
+                              </div>
+                              <h4 className="projectTitle">{p.title}</h4>
+                              <p className="projectDesc">
+                                {p.description ??
+                                  '聚焦視覺系統與版面規範，建立一致的版面秩序與元件化規格，並能與前端協作落地。'}
+                              </p>
+                            </div>
+                          </a>
+                        )
                       );
                     })}
                   </div>
                 </div>
                 <div className="projectsMobileDots" aria-label="Project slide indicators">
-                  {profile.projects.map((dotProject, dotIdx) => (
+                  {projectCards.map((dotProject, dotIdx) => (
                     <button
                       key={`dot-${dotProject.title}-${dotIdx}`}
                       type="button"
                       className={`projectsMobileDot${activeProjectIndex === dotIdx ? ' isActive' : ''}`}
                       onClick={() => scrollToProjectCard(dotIdx)}
-                      aria-label={`查看第 ${dotIdx + 1} 個作品`}
+                      aria-label={dotProject.isLocked ? '查看非公開作品卡片' : `查看第 ${dotIdx + 1} 個作品`}
                     />
                   ))}
                 </div>
@@ -843,6 +964,128 @@ function App() {
           )}
         </Section>
       ))}
+      {isPrivateModalOpen ? (
+        <div
+          className="privateAccessOverlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="非公開作品密碼輸入"
+          onClick={closePrivateModal}
+        >
+          <div
+            className="privateAccessModal"
+            onClick={(event) => event.stopPropagation()}
+            onWheel={(event) => event.stopPropagation()}
+          >
+            <form onSubmit={submitPrivatePassword} className="privateAccessForm">
+              <input
+                type="password"
+                className="privateAccessInput"
+                value={privatePassword}
+                onChange={(event) => {
+                  setPrivatePassword(event.target.value);
+                  if (privatePasswordError) setPrivatePasswordError('');
+                }}
+                placeholder="輸入密碼"
+                autoFocus
+              />
+              {privatePasswordError ? <p className="privateAccessError">{privatePasswordError}</p> : null}
+              <div className="privateAccessActions">
+                <button type="button" className="privateAccessBtn isGhost" onClick={closePrivateModal}>
+                  取消
+                </button>
+                <button type="submit" className="privateAccessBtn isPrimary">
+                  進入
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+      {isPrivateShowcaseOpen ? (
+        <div className="privateShowcaseOverlay" role="dialog" aria-modal="true" aria-label="非公開作品展示" onClick={closePrivateShowcase}>
+          <section
+            className="privateShowcasePanel"
+            onClick={(event) => event.stopPropagation()}
+            onWheel={(event) => event.stopPropagation()}
+          >
+            <header className="privateShowcaseHeader">
+              <h3 className="privateShowcaseTitle">非公開作品</h3>
+              <button
+                type="button"
+                className="privateShowcaseClose"
+                onClick={closePrivateShowcase}
+                aria-label="關閉非公開作品視窗"
+              >
+                ×
+              </button>
+            </header>
+            <div className="privateShowcaseContent" onWheel={(event) => event.stopPropagation()}>
+              <p className="privateShowcaseIntro">
+                我參與的是以 React 為核心的體育博彩前端元件庫專案，採用 styled-components 建立多品牌主題系統，並透過 Storybook 管理元件狀態。我負責在頁面組裝層與市場模板層完成 UI 與互動調整，包含 RWD、深淺色主題及多品牌一致性。
+              </p>
+              <ul className="privateShowcaseBullets">
+                <li>依需求將設計切版至對應頁面與模板，並確保 RWD 一致性。</li>
+                <li>於 Template + Data + styled-components 架構下實作可重用 UI，並維護多品牌 theme（含深/淺色與品牌色系）。</li>
+                <li>以 git 進行版本控制與協作。</li>
+              </ul>
+              <div className="privateShowcaseImageRow">
+                <img
+                  className="privateShowcaseImage"
+                  src={resolveUrl('/images/188/188_dark.png')}
+                  alt="188 深色主題介面"
+                  loading="lazy"
+                />
+                <img
+                  className="privateShowcaseImage"
+                  src={resolveUrl('/images/188/188_light.png')}
+                  alt="188 淺色主題介面"
+                  loading="lazy"
+                />
+              </div>
+              <article className="privateShowcaseTextBlock">
+                <h4 className="privateShowcaseCardTitle">新需求與功能開發</h4>
+                <p className="privateShowcaseCardDesc">針對客戶需求與設計團隊提出的設計稿，轉換為可實作的網頁架構，並參與部分前端邏輯與資料呈現，確保介面與功能在實作端的一致性。</p>
+              </article>
+              <div className="privateShowcaseImageRow">
+                <img
+                  className="privateShowcaseImage"
+                  src={resolveUrl('/images/188/188_bet.png')}
+                  alt="188 博彩介面"
+                  loading="lazy"
+                />
+                <img
+                  className="privateShowcaseImage"
+                  src={resolveUrl('/images/188/188_bb.png')}
+                  alt="188 B2B 介面"
+                  loading="lazy"
+                />
+              </div>
+              <div className="privateShowcaseImageSingle">
+                <p className="privateShowcaseImageCaption">設計圖稿提供相關製作規格。</p>
+                <img
+                  className="privateShowcaseImage"
+                  src={resolveUrl('/images/188/188_mockup1.png')}
+                  alt="188 介面 Mockup"
+                  loading="lazy"
+                />
+              </div>
+              <article className="privateShowcaseTextBlock">
+                <h4 className="privateShowcaseCardTitle">功能上線測試環節</h4>
+                <p className="privateShowcaseCardDesc">QA 部門進行功能測試，並針對問題進行修復。</p>
+              </article>
+              <div className="privateShowcaseImageSingle">
+                <img
+                  className="privateShowcaseImage"
+                  src={resolveUrl('/images/188/188_jira.png')}
+                  alt="188 Jira 專案管理"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

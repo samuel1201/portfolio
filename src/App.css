@@ -983,6 +983,10 @@ section a {
   gap: calc(var(--space-5, 24px) * 2);
 }
 
+.projectsRow.texts {
+  align-items: start;
+}
+
 .projectThumbLink,
 .projectThumbWrap {
   border-radius: 2px;
@@ -999,6 +1003,15 @@ section a {
   border: 0;
   cursor: pointer;
   transition: none;
+}
+
+.projectThumbLink--locked,
+.projectCardLink--locked,
+.projectTextLink--locked {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
 }
 
 .projectThumbLink:hover {
@@ -1021,6 +1034,7 @@ section[data-theme='dark'] .projectThumbLink:hover {
 .projectTextLink {
   display: grid;
   gap: var(--space-2, 8px);
+  align-content: start;
   text-decoration: none;
   color: inherit;
   padding: var(--space-2, 8px) 0;
@@ -1078,6 +1092,41 @@ section[data-theme='dark'] .projectTextLink:hover .projectTitle {
   overflow: hidden;
   will-change: auto;
   transition: none;
+}
+
+.projectThumb--locked {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(72% 72% at 50% 44%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.15) 65%, transparent 100%),
+    linear-gradient(140deg, rgba(246, 247, 249, 0.92) 0%, rgba(235, 237, 241, 0.9) 100%);
+  border: 1px solid rgba(24, 24, 27, 0.12);
+}
+
+.projectLockBadge {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: rgba(24, 24, 27, 0.58);
+}
+
+.projectLockIcon {
+  width: 22px;
+  height: 22px;
+  line-height: 1;
+}
+
+.projectLockIconSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.projectLockText {
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(24, 24, 27, 0.48);
 }
 
 section[data-theme='dark'] .projectThumb {
@@ -1184,6 +1233,273 @@ section[data-theme='dark'] .projectThumb {
 .projectsMobileDot.isActive {
   background: rgba(24, 24, 27, 0.34);
   border-color: rgba(24, 24, 27, 0.34);
+}
+
+.privateAccessOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 8, 10, 0.56);
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.privateAccessModal {
+  width: min(92vw, 420px);
+  border-radius: 2px;
+  border: 1px solid rgba(232, 232, 236, 0.16);
+  background: rgba(29, 29, 29, 0.96);
+  color: #e8e8ec;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.32);
+  padding: 24px;
+}
+
+.privateAccessTitle {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.privateAccessDesc {
+  font-size: 0.92rem;
+  color: rgba(232, 232, 236, 0.76);
+  margin-bottom: 14px;
+}
+
+.privateAccessForm {
+  display: grid;
+  gap: 10px;
+}
+
+.privateAccessInput {
+  width: 100%;
+  border: 1px solid rgba(232, 232, 236, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f5f5f7;
+  border-radius: 2px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.privateAccessInput::placeholder {
+  color: rgba(232, 232, 236, 0.42);
+}
+
+.privateAccessInput:focus {
+  border-color: var(--color-highlight, #7ED321);
+}
+
+.privateAccessError {
+  font-size: 0.84rem;
+  color: color-mix(in srgb, var(--color-highlight, #7ED321) 72%, #e8e8ec 28%);
+}
+
+.privateAccessActions {
+  margin-top: 4px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.privateAccessBtn {
+  border-radius: 2px;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.privateAccessBtn.isGhost {
+  background: transparent;
+  color: rgba(232, 232, 236, 0.84);
+  border-color: rgba(232, 232, 236, 0.26);
+}
+
+.privateAccessBtn.isPrimary {
+  background: var(--color-highlight, #7ED321);
+  color: #131316;
+  border-color: var(--color-highlight, #7ED321);
+  font-weight: 600;
+}
+
+.privateShowcaseOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 8, 10, 0.58);
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+}
+
+.privateShowcasePanel {
+  width: min(94vw, 1080px);
+  height: 90vh;
+  max-height: 90vh;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #ffffff;
+  color: #18181b;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.privateShowcaseHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(24, 24, 27, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+
+.privateShowcaseTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.privateShowcaseClose {
+  border: 0;
+  background: transparent;
+  color: #18181b;
+  font-size: 1.8rem;
+  line-height: 1;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+}
+
+.privateShowcaseContent {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px 28px 40px;
+  display: grid;
+  gap: var(--space-6, 32px);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(24, 24, 27, 0.34) transparent;
+}
+
+.privateShowcaseIntro,
+.privateShowcaseBullets,
+.privateShowcaseCardDesc,
+.privateShowcaseImageCaption {
+  font-size: 0.9375rem;
+}
+
+.privateShowcaseIntro {
+  margin: 0;
+  line-height: 1.75;
+  color: rgba(24, 24, 27, 0.76);
+}
+
+.privateShowcaseBullets {
+  margin: -2px 0 2px;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  color: rgba(24, 24, 27, 0.7);
+  line-height: 1.68;
+}
+
+.privateShowcaseContent::-webkit-scrollbar {
+  width: 4px;
+}
+
+.privateShowcaseContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.privateShowcaseContent::-webkit-scrollbar-thumb {
+  background: rgba(24, 24, 27, 0.34);
+  border-radius: 999px;
+}
+
+.privateShowcaseImageRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5, 24px);
+}
+
+.privateShowcaseImageSingle {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3, 12px);
+}
+
+.privateShowcaseImageCaption {
+  margin: 0;
+  line-height: 1.5;
+  color: rgba(24, 24, 27, 0.62);
+}
+
+.privateShowcaseImageSingle .privateShowcaseImage {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+
+.privateShowcaseImage {
+  width: 100%;
+  max-width: 100%;
+  display: block;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid rgba(24, 24, 27, 0.08);
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+
+.privateShowcaseTextBlock {
+  border-top: 1px solid rgba(24, 24, 27, 0.1);
+  padding-top: var(--space-5, 24px);
+}
+
+.privateShowcaseCardTitle {
+  margin: 0 0 var(--space-2, 8px);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.privateShowcaseCardDesc {
+  margin: 0;
+  line-height: 1.68;
+  color: rgba(24, 24, 27, 0.7);
+}
+
+@media (max-width: 900px) {
+  .privateShowcasePanel {
+    width: min(96vw, 1080px);
+  }
+}
+
+@media (max-width: 640px) {
+  .privateShowcaseContent {
+    padding: 20px 20px 28px;
+    gap: var(--space-5, 24px);
+  }
+
+  .privateShowcaseImageRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-4, 16px);
+  }
 }
 
 .heroActions {
