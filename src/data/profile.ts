@@ -35,7 +35,7 @@ export type ResumeSection = {
 };
 
 export const profile: Profile = {
-  name: 'Samuel Wang',
+  name: 'Sam Wang',
   summary:
     '專長 Web UI 與前端協作，能在設計階段納入元件化思維，讓設計到開發的轉換更順暢。',
   email: 'samuel1201@gmail.com',

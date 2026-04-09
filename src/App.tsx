@@ -585,7 +585,7 @@ function App() {
                 <div className="aboutGrid">
                   <aside className="aboutPhotoSide">
                     <div className="aboutPhoto">
-                      <img src={resolveUrl('/sam_pic.jpg')} alt="Sam Wang portrait" loading="lazy" />
+                      <img src={resolveUrl('/samuel_pic.jpg')} alt="Sam Wang portrait" loading="lazy" />
                     </div>
                   </aside>
                   <div className="aboutMain">
