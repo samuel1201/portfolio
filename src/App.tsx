@@ -557,7 +557,7 @@ function App() {
                   </span>
                   <span className="heroLine heroLineName">
                     <span className="heroNameWrapper">
-                      <span className="heroNameText">Samuel</span>
+                      <span className="heroNameText">Sam</span>
                     </span>
                   </span>
                   <span className="heroLine heroLineRole">
@@ -585,7 +585,7 @@ function App() {
                 <div className="aboutGrid">
                   <aside className="aboutPhotoSide">
                     <div className="aboutPhoto">
-                      <img src={resolveUrl('/samuel_pic.jpg')} alt="Samuel Wang portrait" loading="lazy" />
+                      <img src={resolveUrl('/sam_pic.jpg')} alt="Sam Wang portrait" loading="lazy" />
                     </div>
                   </aside>
                   <div className="aboutMain">
